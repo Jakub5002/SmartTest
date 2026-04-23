@@ -1,12 +1,12 @@
 package com.example.backend.repository;
 
-import com.example.backend.model.User;
+import com.example.backend.model.StudentAnswer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
 
 @Repository
-public interface StudentAnswerRepository extends JpaRepository<User, UUID> {
+public interface StudentAnswerRepository extends JpaRepository<StudentAnswer, UUID> {
 
 }
