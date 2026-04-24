@@ -30,7 +30,7 @@ public class Question {
     private List<String> options;
 
     @Column(name = "correct_option")
-    private String correct_option;
+    private String correctOption;
     @ManyToOne
     @JoinColumn(name = "exam_id", nullable = false)
     @JsonBackReference // Zapobiega serializacji egzaminu wewnątrz pytania
