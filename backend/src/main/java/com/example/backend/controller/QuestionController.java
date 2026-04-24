@@ -1,11 +1,13 @@
 package com.example.backend.controller;
 
-import com.example.backend.model.AnswerRequest;
+import com.example.backend.dto.AnswerRequest;
+import com.example.backend.dto.QuestionResponse;
 import com.example.backend.model.Question;
 import com.example.backend.repository.QuestionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PutMapping;
 
 import java.util.List;
 import java.util.UUID;
@@ -43,10 +45,38 @@ public class QuestionController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/exam/{examId}")//Powiązanie pytań z konkretnym egzaminem
-    public ResponseEntity<List<Question>> getQuestionsByExam(@PathVariable UUID examId) {
+    @GetMapping("/exam/{examId}")
+    public ResponseEntity<List<QuestionResponse>> getQuestionsByExam(@PathVariable UUID examId) {
         List<Question> questions = questionRepository.findByExamId(examId);
-        return ResponseEntity.ok(questions);
+
+        //DTO dla studenta
+        List<QuestionResponse> response = questions.stream()
+                .map(q -> new QuestionResponse(q.getId(), q.getContent(), q.getOptions()))
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/{id}")//Update Questions
+    public ResponseEntity<Question> updateQuestion(@PathVariable UUID id, @RequestBody Question questionDetails) {
+        return questionRepository.findById(id)
+                .map(question -> {
+                    // Tutaj zmieniamy dane w obiekcie wyjętym z bazy
+                    question.setContent(questionDetails.getContent());
+                    question.setOptions(questionDetails.getOptions());
+                    question.setCorrectOption(questionDetails.getCorrectOption());
+
+                    // Ważne: musimy zachować powiązanie z egzaminem
+                    if (questionDetails.getExam() != null) {
+                        question.setExam(questionDetails.getExam());
+                    }
+
+                    // Zapisujemy zmiany
+                    Question updated = questionRepository.save(question);
+                    return ResponseEntity.ok(updated);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
 
 }
