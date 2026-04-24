@@ -1,5 +1,9 @@
 package com.example.backend.model;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*; //JPA - Java Persistence API | do operowania na bazie danych
+
+import java.util.List;
 import java.util.UUID; // biblioteka do generowania idnetyfikatorów
 import java.util.Objects;
 import lombok.Getter;
@@ -23,7 +27,13 @@ public class Exam {
 
     private boolean is_active;
 
-    @ManyToOne // Wiele egzaminów może być stworzonych przez jednego admina
-    @JoinColumn(name = "created_by")
+    // RELACJA Z USEREM (Adminem)
+    @ManyToOne
+    @JoinColumn(name = "created_by") // To stworzy kolumnę created_by w tabeli exams
     private User createdBy;
+
+    // RELACJA Z PYTANIAMI
+    @OneToMany(mappedBy = "exam")
+    @JsonIgnore
+    private List<Question> questions;
 }
