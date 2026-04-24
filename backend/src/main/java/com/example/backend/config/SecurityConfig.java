@@ -21,27 +21,22 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Wyłączamy CSRF, bo przeszkadza w testowaniu POST z zewnętrznych narzędzi
                 .csrf(csrf -> csrf.disable())
-
-                //dodajemy filtr przed standardowym filtrem logowania ._.
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-
-                // Zezwalamy na wszystkie zapytania do /api/
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
-                //zapytanie musi pryzniesc token
                 .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 );
+
         return http.build();
     }
 
     @Bean
-    public BCryptPasswordEncoder passwordEncoder(){
+    public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }
