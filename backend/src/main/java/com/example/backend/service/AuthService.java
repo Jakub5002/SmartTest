@@ -2,6 +2,7 @@ package com.example.backend.service;
 
 import com.example.backend.model.User;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import java.util.Optional;
 public class AuthService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final JwtUtils jwtUtils;
 
     public User register(String email, String password){
         if(userRepository.existsByEmail(email)){
@@ -28,13 +30,12 @@ public class AuthService {
         return userRepository.save(user);
     }
 
-    public boolean login(String email, String password){
+    public String login(String email, String password){
         Optional<User> userOpt = userRepository.findByEmail(email);
 
-        if(userOpt.isPresent()){
-            User user = userOpt.get();
-            return passwordEncoder.matches(password, user.getPassword());
+        if(userOpt.isPresent() && passwordEncoder.matches(password, userOpt.get().getPassword())){
+            return  jwtUtils.generateToken(email);
         }
-        return false;
+        throw new RuntimeException("Błędne dane ");
     }
 }

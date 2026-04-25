@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -28,10 +30,10 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request){
-        boolean success = authService.login(request.getEmail(), request.getPassword());
+        String token = authService.login(request.getEmail(), request.getPassword());
 
-        if(success){
-            return ResponseEntity.ok("Zalogowano pomyslnie");
+        if(token != null){
+            return ResponseEntity.ok(Map.of("token", token));
         }else{
             return ResponseEntity.status(401).body("Błedne dane");
         }
