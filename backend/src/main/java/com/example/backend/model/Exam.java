@@ -1,11 +1,9 @@
 package com.example.backend.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*; //JPA - Java Persistence API | do operowania na bazie danych
 
 import java.util.List;
 import java.util.UUID; // biblioteka do generowania idnetyfikatorów
-import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,10 +20,11 @@ public class Exam {
     @Column(nullable = false, unique = true)
     private String title;
 
-    @Column(nullable = false)
-    private int duration_minutes;
+    @Column(name = "is_active")
+    private boolean active;
 
-    private boolean is_active;
+    @Column(name = "duration_minutes", nullable = false)
+    private int durationMinutes;
 
     // RELACJA Z USEREM (Adminem)
     @ManyToOne
