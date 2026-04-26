@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/exams")
@@ -69,5 +70,14 @@ public class ExamController {
         double percentage = ((double) score / totalQuestions) * 100;
 
         return ResponseEntity.ok(new ExamResult(score, totalQuestions, percentage));
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteExam(@PathVariable UUID id) {
+        return examRepository.findById(id)
+                .map(exam -> {
+                    examRepository.delete(exam);
+                    return ResponseEntity.noContent().<Void>build();
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }

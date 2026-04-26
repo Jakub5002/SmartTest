@@ -94,5 +94,13 @@ public class QuestionController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteQuestion(@PathVariable UUID id) {
+        return questionRepository.findById(id)
+                .map(question -> {
+                    questionRepository.delete(question);
+                    return ResponseEntity.noContent().<Void>build();
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
 }
