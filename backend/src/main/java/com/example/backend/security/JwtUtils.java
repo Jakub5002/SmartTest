@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class JwtUtils {
@@ -26,9 +27,10 @@ public class JwtUtils {
         this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    public String generateToken(String email){
+    public String generateToken(String email, List<String> roles){
         return Jwts.builder().
                 setSubject(email).
+                claim("roles", roles).
                 setIssuedAt(new Date()).
                 setExpiration(new Date((new Date()).getTime()+jwtExpirationMs)).
                 signWith(key, SignatureAlgorithm.HS256).
@@ -42,6 +44,15 @@ public class JwtUtils {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+
+    public List<String> getRolesFromToken(String token){
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("roles", List.class);
     }
 
     public boolean validateToken(String token){

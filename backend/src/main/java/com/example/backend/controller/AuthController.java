@@ -3,6 +3,7 @@ package com.example.backend.controller;
 import com.example.backend.dto.AuthRequest;
 import com.example.backend.model.User;
 import com.example.backend.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +20,7 @@ public class AuthController {
     public final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody AuthRequest request){
+    public ResponseEntity<?> register(@Valid @RequestBody AuthRequest request){
         try{
             User registeredUser = authService.register(request.getEmail(), request.getPassword());
             return ResponseEntity.ok("Użytkownik zarejestowant ok! " +  registeredUser.getId());

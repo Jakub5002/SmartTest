@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -25,16 +26,18 @@ public class AuthService {
         User user = new User();
         user.setEmail(email);
         user.setPassword(hashedPassword);
-        user.setRole("STUDENT");
+        user.setRole("ROLE_STUDENT");
 
         return userRepository.save(user);
     }
 
     public String login(String email, String password){
-        Optional<User> userOpt = userRepository.findByEmail(email);
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Błędny dane"));
 
-        if(userOpt.isPresent() && passwordEncoder.matches(password, userOpt.get().getPassword())){
-            return  jwtUtils.generateToken(email);
+        if (passwordEncoder.matches(password, user.getPassword())) {
+
+            List<String> roles = List.of(user.getRole());
+            return jwtUtils.generateToken(email, roles);
         }
         throw new RuntimeException("Błędne dane ");
     }
