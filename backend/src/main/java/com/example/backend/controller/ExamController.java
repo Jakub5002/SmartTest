@@ -5,12 +5,12 @@ import com.example.backend.model.Exam;
 import com.example.backend.model.Question;
 import com.example.backend.repository.ExamRepository;
 import com.example.backend.repository.QuestionRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/exams")
@@ -33,8 +33,13 @@ public class ExamController {
     }
 
     @PostMapping
-    public Exam addExam(@RequestBody Exam exam){
-        return examRepository.save(exam);
+    public ResponseEntity<Exam> addExam(@Valid @RequestBody ExamRequest request) {
+        Exam exam = new Exam();
+        exam.setTitle(request.title());
+        exam.setDurationMinutes(request.durationMinutes());
+        exam.setActive(request.isActive());
+
+        return ResponseEntity.ok(examRepository.save(exam));
     }
 
     @PostMapping("/{examId}/submit")
@@ -48,23 +53,7 @@ public class ExamController {
 
         int score = 0;
 
-        // 2. Porównaj odpowiedzi studenta z tymi z bazy
-        for (Question q : questions) {
-            // Znajdź odpowiedź studenta dla konkretnego ID pytania
-            submission.answers().stream()
-                    .filter(answer -> answer.questionId().equals(q.getId()))
-                    .findFirst()
-                    .ifPresent(answer -> {
-                        // Jeśli student udzielił odpowiedzi i jest ona poprawna - punkt!
-                        if (q.getCorrectOption().equals(answer.selectedOption())) {
-                            // Uwaga: wewnątrz lambdy musimy użyć triku,
-                            // ale dla czytelności użyjemy zmiennej pomocniczej poza streamem
-                            // lub zmienimy to na zwykłą pętlę.
-                        }
-                    });
-        }
-
-        // Wersja z klasycznymi pętlami (bezpieczniejsza i czytelniejsza dla początkujących):
+        //Porównanie odpowiedzi z zaznaczonymi
         for (Question dbQuestion : questions) {
             for (UserAnswer userAnswer : submission.answers()) {
                 if (dbQuestion.getId().equals(userAnswer.questionId())) {
@@ -75,7 +64,7 @@ public class ExamController {
             }
         }
 
-        // 3. Oblicz statystyki
+        // Oblicz statystyki
         int totalQuestions = questions.size();
         double percentage = ((double) score / totalQuestions) * 100;
 

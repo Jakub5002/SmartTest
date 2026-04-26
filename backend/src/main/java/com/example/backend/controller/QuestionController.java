@@ -1,13 +1,17 @@
 package com.example.backend.controller;
 
 import com.example.backend.dto.AnswerRequest;
+import com.example.backend.dto.QuestionRequest;
 import com.example.backend.dto.QuestionResponse;
 import com.example.backend.model.Question;
 import com.example.backend.repository.QuestionRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.PutMapping;
+import com.example.backend.model.Exam;
+import com.example.backend.repository.ExamRepository;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,6 +21,9 @@ import java.util.UUID;
 public class QuestionController {
     @Autowired
     private QuestionRepository questionRepository;
+
+    @Autowired
+    private ExamRepository examRepository;
 
     @GetMapping("/test")
     public String test() {
@@ -28,8 +35,17 @@ public class QuestionController {
         return questionRepository.findAll();
     }
     @PostMapping
-    public Question addQuestion(@RequestBody Question question) { // <-- MUSI BYĆ @RequestBody
-        return questionRepository.save(question);
+    public ResponseEntity<Question> addQuestion(@Valid @RequestBody QuestionRequest request){
+        Exam exam = examRepository.findById(request.examId())
+                .orElseThrow(() -> new RuntimeException("Exam not found"));
+
+        Question question = new Question();
+        question.setContent(request.content());
+        question.setOptions(request.options());
+        question.setCorrectOption(request.correctOption());
+        question.setExam(exam);
+
+        return ResponseEntity.ok(questionRepository.save(question));
     }
 
     @PostMapping("/{id}/check")//Sprawdzanie czy pytanie jest dobre z wymagana odpowiedzią
@@ -66,7 +82,7 @@ public class QuestionController {
                     question.setOptions(questionDetails.getOptions());
                     question.setCorrectOption(questionDetails.getCorrectOption());
 
-                    // Ważne: musimy zachować powiązanie z egzaminem
+                    // musimy zachować powiązanie z egzaminem
                     if (questionDetails.getExam() != null) {
                         question.setExam(questionDetails.getExam());
                     }
