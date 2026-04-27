@@ -1,0 +1,34 @@
+package com.example.backend.controller;
+
+import com.example.backend.dto.UpdateEmailRequest;
+import com.example.backend.dto.UpdatePasswordRequest;
+import com.example.backend.service.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.security.Principal;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/user")
+public class UserController {
+    private final UserService userService;
+
+    @PutMapping("/update-emial")
+    public ResponseEntity<?> updateEamil(@Valid @RequestBody UpdateEmailRequest request, Principal principal){
+        userService.updateEmail(principal.getName(), request.getNewEmail());
+        return  ResponseEntity.ok("Email został pomyslnie zaktualizowany");
+    }
+
+    @PutMapping("/update-password")
+    public ResponseEntity<?> updateEmail(@Valid @RequestBody UpdatePasswordRequest request, Principal principal){
+        userService.updatePassword(principal.getName(), request.getOldPassword(), request.getNewPassword());
+        return  ResponseEntity.ok("Haslo zostalo zmienione");
+    }
+}
