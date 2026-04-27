@@ -44,6 +44,7 @@ public class QuestionController {
         question.setOptions(request.options());
         question.setCorrectOption(request.correctOption());
         question.setExam(exam);
+        question.setPoints(request.points());
 
         return ResponseEntity.ok(questionRepository.save(question));
     }
@@ -81,6 +82,7 @@ public class QuestionController {
                     question.setContent(questionDetails.getContent());
                     question.setOptions(questionDetails.getOptions());
                     question.setCorrectOption(questionDetails.getCorrectOption());
+                    question.setPoints(questionDetails.getPoints());
 
                     // musimy zachować powiązanie z egzaminem
                     if (questionDetails.getExam() != null) {

@@ -17,5 +17,7 @@ public record QuestionRequest(
         List<String> options,
 
         @NotNull(message = "ID egzaminu jest wymagane")
-        UUID examId
+        UUID examId,
+
+        int points
 ) {}

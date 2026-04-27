@@ -13,7 +13,7 @@ public record ExamRequest(
         @Min(value = 1, message = "Czas trwania musi być większy niż 0")
         Integer durationMinutes,
 
-        Boolean isActive,
-
+        Boolean
+        isActive,
         UUID createdBy
 ) {}

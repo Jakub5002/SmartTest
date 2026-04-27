@@ -25,6 +25,8 @@ public class Question {
 
     private String content;
 
+    private int points = 1;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private List<String> options;
