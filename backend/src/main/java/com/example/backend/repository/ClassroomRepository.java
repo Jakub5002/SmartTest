@@ -1,7 +1,7 @@
 package com.example.backend.repository;
 
 import com.example.backend.model.Classroom;
-import com.example.backend.model.Exam;
+import com.example.backend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface ExamRepository extends JpaRepository<Exam, UUID> {
-    Optional<Exam> findById(UUID id);
-
+public interface ClassroomRepository extends JpaRepository<Classroom, UUID> {
+    Optional<Classroom> findById(UUID id);
 }
