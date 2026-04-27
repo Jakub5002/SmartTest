@@ -2,13 +2,16 @@ package com.example.backend.controller;
 
 import com.example.backend.dto.*;
 import com.example.backend.model.Exam;
+import com.example.backend.model.ExamSession;
 import com.example.backend.model.Question;
 import com.example.backend.repository.ExamRepository;
+import com.example.backend.repository.ExamSessionRepository;
 import com.example.backend.repository.QuestionRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDateTime;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +25,9 @@ public class ExamController {
 
     @Autowired
     private QuestionRepository questionRepository;
+
+    @Autowired
+    private ExamSessionRepository examSessionRepository;
 
     @GetMapping("/test")
     public String test() {
@@ -44,17 +50,26 @@ public class ExamController {
     }
 
     @PostMapping("/{examId}/submit")
-    public ResponseEntity<ExamResult> submitExam(@PathVariable java.util.UUID examId, @RequestBody ExamSubmission submission) {
-        // Pobierz wszystkie poprawne pytania dla tego egzaminu z bazy
-        List<Question> questions = questionRepository.findByExamId(examId);
+    public ResponseEntity<?> submitExam(@PathVariable UUID examId, @RequestBody ExamSubmission submission) {
+        // Sprawdź sesję
+        ExamSession session = examSessionRepository.findByExamIdAndUserId(examId, submission.userId())
+                .orElse(null);
+        if (session == null) return ResponseEntity.badRequest().body("Nie rozpocząłeś egzaminu");
+        if (session.isSubmitted()) return ResponseEntity.badRequest().body("Egzamin już został oddany");
 
-        if (questions.isEmpty()) {
-            return ResponseEntity.notFound().build();
+        // Sprawdź czy czas nie minął
+        int durationMinutes = session.getExam().getDurationMinutes();
+        LocalDateTime endTime = session.getStartedAt().plusMinutes(durationMinutes);
+        if (LocalDateTime.now().isAfter(endTime)) {
+            session.setSubmitted(true);
+            examSessionRepository.save(session);
+            return ResponseEntity.badRequest().body("Czas egzaminu minął");
         }
+        List<Question> questions = questionRepository.findByExamId(examId);
+        if (questions.isEmpty()) return ResponseEntity.notFound().build();
 
         int score = 0;
         int totalScore = 0;
-        //Porównanie odpowiedzi z zaznaczonymi
         for (Question dbQuestion : questions) {
             for (UserAnswer userAnswer : submission.answers()) {
                 if (dbQuestion.getId().equals(userAnswer.questionId())) {
@@ -66,12 +81,13 @@ public class ExamController {
             totalScore += dbQuestion.getPoints();
         }
 
-        // Oblicz statystyki
-        double percentage = ((double) score / totalScore) * 100;
+        // Oznacz jako submitted
+        session.setSubmitted(true);
+        examSessionRepository.save(session);
 
+        double percentage = ((double) score / totalScore) * 100;
         return ResponseEntity.ok(new ExamResult(score, totalScore, percentage));
     }
-
     @PatchMapping("/{id}")
     public ResponseEntity<Exam> patchExam(@PathVariable UUID id, @RequestBody ExamRequest examDetails) {
         return examRepository.findById(id)
