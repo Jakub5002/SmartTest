@@ -29,8 +29,9 @@ public class SecurityConfig {
 
                 // Zezwalamy na wszystkie zapytania do /api/
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .anyRequest().permitAll()
                 )
                 //zapytanie musi pryzniesc token
                 .sessionManagement(session -> session
