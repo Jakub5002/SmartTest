@@ -21,7 +21,7 @@ public class Exam {
     private String title;
 
     @Column(name = "is_active")
-    private boolean active;
+    private Boolean active;
 
     @Column(name = "duration_minutes", nullable = false)
     private int durationMinutes;
