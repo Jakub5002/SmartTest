@@ -15,4 +15,6 @@ public class AuthRequest {
     @NotBlank(message = "Haslo nie moze byc puste")
     @Size(min = 6, message = "Haslo musi miec co najmniej 6 znakow")
     private String password;
+
+    private boolean admin;
 }

@@ -1,5 +1,6 @@
 package com.example.backend.service;
 
+import com.example.backend.dto.AuthRequest;
 import com.example.backend.model.User;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.security.JwtUtils;
@@ -17,16 +18,20 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
 
-    public User register(String email, String password){
-        if(userRepository.existsByEmail(email)){
+    public User register(AuthRequest request){
+        if(userRepository.existsByEmail(request.getEmail())){
             throw new RuntimeException("Emaill juz zajety");
         }
 
-        String hashedPassword = passwordEncoder.encode(password);
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
         User user = new User();
-        user.setEmail(email);
+        user.setEmail(request.getEmail());
         user.setPassword(hashedPassword);
-        user.setRole("ROLE_STUDENT");
+        if(request.isAdmin()){
+            user.setRole("ROLE_ADMIN");
+        } else{
+            user.setRole("ROLE_STUDENT");
+        }
 
         return userRepository.save(user);
     }
