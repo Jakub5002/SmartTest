@@ -15,7 +15,7 @@ public class UserService {
     public void updateEmail(String currentEmail, String newEmail){
         User user = userRepository.findByEmail(currentEmail).orElseThrow(() -> new RuntimeException("Uzytkownik nie istnieje"));
 
-        if(userRepository.existsByEmail(currentEmail)){
+        if(!userRepository.existsByEmail(currentEmail)){
             throw new RuntimeException("Ten email jest już zajety");
         }
 
