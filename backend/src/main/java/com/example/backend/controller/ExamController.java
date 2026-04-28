@@ -7,9 +7,11 @@ import com.example.backend.model.Question;
 import com.example.backend.repository.ExamRepository;
 import com.example.backend.repository.ExamSessionRepository;
 import com.example.backend.repository.QuestionRepository;
+import com.example.backend.repository.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
@@ -29,6 +31,9 @@ public class ExamController {
     @Autowired
     private ExamSessionRepository examSessionRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @GetMapping("/test")
     public String test() {
         return "Logika egzaminów na nowym branchu działa!";
@@ -40,6 +45,7 @@ public class ExamController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Exam> addExam(@Valid @RequestBody ExamRequest request) {
         Exam exam = new Exam();
         exam.setTitle(request.title());
