@@ -4,6 +4,7 @@ import com.example.backend.dto.*;
 import com.example.backend.model.Exam;
 import com.example.backend.model.ExamSession;
 import com.example.backend.model.Question;
+import com.example.backend.model.User;
 import com.example.backend.repository.ExamRepository;
 import com.example.backend.repository.ExamSessionRepository;
 import com.example.backend.repository.QuestionRepository;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -52,6 +54,10 @@ public class ExamController {
         exam.setDurationMinutes(request.durationMinutes());
         exam.setActive(request.isActive());
 
+        User user = userRepository.findById(request.createdBy())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + request.createdBy()));
+
+        exam.setCreatedBy(user);
         return ResponseEntity.ok(examRepository.save(exam));
     }
 
