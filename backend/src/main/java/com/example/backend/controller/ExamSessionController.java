@@ -6,6 +6,7 @@ import com.example.backend.model.User;
 import com.example.backend.repository.ExamRepository;
 import com.example.backend.repository.ExamSessionRepository;
 import com.example.backend.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,25 +30,32 @@ public class ExamSessionController {
 
     @PostMapping("/start/{examId}")
     public ResponseEntity<?> startExam(@PathVariable UUID examId, @RequestParam UUID userId) {
-        Exam exam = examRepository.findById(examId).orElse(null);
-        if (exam == null) return ResponseEntity.notFound().build();
+        // 1. Pobranie danych z elegancką obsługą błędów
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> new EntityNotFoundException("Egzamin nie istnieje"));
 
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Użytkownik nie istnieje"));
+
+        // 2. Walidacja biznesowa
         if (!exam.getActive()) {
-            return ResponseEntity.badRequest().body("Egzamin nie jest aktywny");
+            return ResponseEntity.badRequest().body("Egzamin jest obecnie nieaktywny.");
         }
 
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null) return ResponseEntity.notFound().build();
+        // 3. Sprawdzenie czy sesja już trwa
+        boolean alreadyStarted = examSessionRepository.findByExamIdAndUserId(examId, userId).isPresent();
+        if (alreadyStarted) {
+            return ResponseEntity.badRequest().body("Już rozpocząłeś ten egzamin.");
+        }
 
-        Optional<ExamSession> existing = examSessionRepository.findByExamIdAndUserId(examId, userId);
-        if (existing.isPresent()) return ResponseEntity.badRequest().body("Sesja już istnieje");
-
+        // 4. Tworzenie nowej sesji
         ExamSession session = new ExamSession();
         session.setExam(exam);
         session.setUser(user);
         session.setStartedAt(LocalDateTime.now());
         session.setSubmitted(false);
 
-        return ResponseEntity.ok(examSessionRepository.save(session));
+        ExamSession savedSession = examSessionRepository.save(session);
+        return ResponseEntity.ok(savedSession);
     }
 }

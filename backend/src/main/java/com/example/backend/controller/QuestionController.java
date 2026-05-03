@@ -8,6 +8,7 @@ import com.example.backend.repository.QuestionRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.PutMapping;
 import com.example.backend.model.Exam;
@@ -35,6 +36,7 @@ public class QuestionController {
         return questionRepository.findAll();
     }
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Question> addQuestion(@Valid @RequestBody QuestionRequest request){
         Exam exam = examRepository.findById(request.examId())
                 .orElseThrow(() -> new RuntimeException("Exam not found"));

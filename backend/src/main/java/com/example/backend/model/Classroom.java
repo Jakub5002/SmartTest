@@ -33,4 +33,6 @@ public class Classroom {
             inverseJoinColumns = @JoinColumn(name = "exam_id")
     )
     private Set<Exam> exams = new HashSet<>();
+
+
 }

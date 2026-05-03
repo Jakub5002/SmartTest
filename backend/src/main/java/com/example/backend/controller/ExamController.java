@@ -1,14 +1,10 @@
 package com.example.backend.controller;
 
 import com.example.backend.dto.*;
-import com.example.backend.model.Exam;
-import com.example.backend.model.ExamSession;
-import com.example.backend.model.Question;
-import com.example.backend.model.User;
-import com.example.backend.repository.ExamRepository;
-import com.example.backend.repository.ExamSessionRepository;
-import com.example.backend.repository.QuestionRepository;
-import com.example.backend.repository.UserRepository;
+import com.example.backend.model.*;
+import com.example.backend.repository.*;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -35,6 +30,9 @@ public class ExamController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private  ClassroomRepository classroomRepository;
 
     @GetMapping("/test")
     public String test() {
@@ -114,13 +112,32 @@ public class ExamController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Transactional
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteExam(@PathVariable UUID id) {
-        return examRepository.findById(id)
-                .map(exam -> {
-                    examRepository.delete(exam);
-                    return ResponseEntity.noContent().<Void>build();
-                })
-                .orElse(ResponseEntity.notFound().build());
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteExam(@PathVariable UUID id) {
+        // 1. Znajdź egzamin lub rzuć błąd 404
+        Exam exam = examRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Exam not found with id: " + id));
+
+        // 2. Rozwiązanie problemu "classroom_exams"
+        // Szukamy wszystkich klas, które mają ten egzamin na swojej liście
+        List<Classroom> classrooms = classroomRepository.findAllByExamsContaining(exam);
+
+        // Usuwamy egzamin z każdej znalezionej klasy (to czyści tabelę łączącą w bazie)
+        for (Classroom classroom : classrooms) {
+            classroom.getExams().remove(exam);
+        }
+
+        // Zapisujemy zmiany w klasach
+        classroomRepository.saveAll(classrooms);
+
+        // 3. Finalne usunięcie egzaminu
+        // Upewnij się, że w encji Exam masz CascadeType.ALL dla pytań i sesji,
+        // aby one również zostały usunięte automatycznie.
+        examRepository.delete(exam);
+
+        return ResponseEntity.noContent().build();
     }
+
 }
