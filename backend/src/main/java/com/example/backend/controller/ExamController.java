@@ -45,7 +45,7 @@ public class ExamController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Exam> addExam(@Valid @RequestBody ExamRequest request) {
         Exam exam = new Exam();
         exam.setTitle(request.title());
