@@ -5,7 +5,9 @@ import com.example.backend.dto.QuestionRequest;
 import com.example.backend.dto.QuestionResponse;
 import com.example.backend.model.Question;
 import com.example.backend.repository.QuestionRepository;
+import com.example.backend.service.QuestionService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,12 +21,12 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/questions")
+@RequiredArgsConstructor
 public class QuestionController {
-    @Autowired
-    private QuestionRepository questionRepository;
 
-    @Autowired
-    private ExamRepository examRepository;
+    private final QuestionRepository questionRepository;
+    private final ExamRepository examRepository;
+    private final QuestionService questionService;
 
     @GetMapping("/test")
     public String test() {
@@ -65,33 +67,25 @@ public class QuestionController {
     }
 
     @GetMapping("/exam/{examId}")
-    public ResponseEntity<List<QuestionResponse>> getQuestionsByExam(@PathVariable UUID examId) {
-        List<Question> questions = questionRepository.findByExamId(examId);
-
-        //DTO dla studenta
-        List<QuestionResponse> response = questions.stream()
-                .map(q -> new QuestionResponse(q.getId(), q.getContent(), q.getOptions()))
-                .toList();
-
+    public ResponseEntity<List<QuestionResponse>> getQuestionsByExam(@PathVariable UUID examId, @RequestParam(defaultValue = "100") int limit ) {
+        List<QuestionResponse> response = questionService.getShuffledQuestionsForExam(examId, limit);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")//Update Questions
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Question> updateQuestion(@PathVariable UUID id, @RequestBody Question questionDetails) {
         return questionRepository.findById(id)
                 .map(question -> {
-                    // Tutaj zmieniamy dane w obiekcie wyjętym z bazy
                     question.setContent(questionDetails.getContent());
                     question.setOptions(questionDetails.getOptions());
                     question.setCorrectOption(questionDetails.getCorrectOption());
                     question.setPoints(questionDetails.getPoints());
 
-                    // musimy zachować powiązanie z egzaminem
                     if (questionDetails.getExam() != null) {
                         question.setExam(questionDetails.getExam());
                     }
 
-                    // Zapisujemy zmiany
                     Question updated = questionRepository.save(question);
                     return ResponseEntity.ok(updated);
                 })
@@ -99,6 +93,7 @@ public class QuestionController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteQuestion(@PathVariable UUID id) {
         return questionRepository.findById(id)
                 .map(question -> {
