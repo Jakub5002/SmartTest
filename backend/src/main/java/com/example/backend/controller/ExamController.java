@@ -4,6 +4,7 @@ import com.example.backend.dto.*;
 import com.example.backend.model.*;
 import com.example.backend.repository.*;
 import com.example.backend.service.ExamService;
+import com.example.backend.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -12,10 +13,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 import java.time.LocalDateTime;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/exams")
@@ -28,6 +33,7 @@ public class ExamController {
     private final UserRepository userRepository;
     private  final ClassroomRepository classroomRepository;
     private final ExamService examService;
+    private final UserService userService;
 
     @GetMapping("/test")
     public String test() {
@@ -98,4 +104,14 @@ public class ExamController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/my")
+    @PreAuthorize("hasAnyRole('STUDENT', 'ADMIN')")
+    public ResponseEntity<Set<Exam>> getMyAvaliableExams(Principal principal) {
+        UUID userId = userService.getUserIdByEmail(principal.getName());
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Uzytkownik nie istnieje"));
+        List<Classroom> userClassrooms = classroomRepository.findAllByStudentsContaining(user);
+        Set<Exam> avaliableExams = userClassrooms.stream().flatMap(classroom -> classroom.getExams().stream()).filter(Exam::getActive).collect(Collectors.toSet());
+
+        return  ResponseEntity.ok(avaliableExams);
+    }
 }

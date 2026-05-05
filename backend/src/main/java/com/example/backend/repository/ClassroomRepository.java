@@ -14,4 +14,5 @@ import java.util.UUID;
 public interface ClassroomRepository extends JpaRepository<Classroom, UUID> {
     Optional<Classroom> findById(UUID id);
     List<Classroom> findAllByExamsContaining(Exam exam);
+    List<Classroom> findAllByStudentsContaining(User student);
 }

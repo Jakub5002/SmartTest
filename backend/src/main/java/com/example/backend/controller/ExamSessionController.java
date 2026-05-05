@@ -1,9 +1,11 @@
 package com.example.backend.controller;
 
 import com.example.backend.dto.UserAnswer;
+import com.example.backend.model.Classroom;
 import com.example.backend.model.Exam;
 import com.example.backend.model.ExamSession;
 import com.example.backend.model.User;
+import com.example.backend.repository.ClassroomRepository;
 import com.example.backend.repository.ExamRepository;
 import com.example.backend.repository.ExamSessionRepository;
 import com.example.backend.repository.UserRepository;
@@ -25,6 +27,7 @@ public class ExamSessionController {
     private final ExamSessionRepository examSessionRepository;
     private final ExamRepository examRepository;
     private final UserRepository userRepository;
+    private final ClassroomRepository classroomRepository;
 
 
     @PostMapping("/start/{examId}")
@@ -34,6 +37,13 @@ public class ExamSessionController {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Użytkownik nie istnieje"));
+
+        List<Classroom> classroomsWithExam = classroomRepository.findAllByExamsContaining(exam);
+        boolean isStuedntInClass = classroomsWithExam.stream().anyMatch(classroom -> classroom.getStudents().contains(user));
+
+        if (!isStuedntInClass && !"ROLE_ADMIN".equals((user.getRole()))){
+            return ResponseEntity.status(403).body("Ten egzamin nie został przypisany do Twojej klasy.");
+        }
 
         if (!exam.getActive()) {
             return ResponseEntity.badRequest().body("Egzamin jest obecnie nieaktywny.");
