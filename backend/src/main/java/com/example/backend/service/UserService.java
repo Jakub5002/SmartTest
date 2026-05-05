@@ -15,7 +15,7 @@ public class UserService {
     public void updateEmail(String currentEmail, String newEmail){
         User user = userRepository.findByEmail(currentEmail).orElseThrow(() -> new RuntimeException("Uzytkownik nie istnieje"));
 
-        if(!userRepository.existsByEmail(currentEmail)){
+        if(userRepository.existsByEmail(newEmail)){
             throw new RuntimeException("Ten email jest już zajety");
         }
 
@@ -32,5 +32,11 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+    }
+
+    public java.util.UUID getUserIdByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnieje: " + email));
+        return user.getId();
     }
 }

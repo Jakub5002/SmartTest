@@ -32,7 +32,15 @@ public class Exam {
     private User createdBy;
 
     // RELACJA Z PYTANIAMI
-    @OneToMany(mappedBy = "exam")
+    @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Question> questions;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean deleted = false; //Sprawdzanie czy egzamin jest usunięty
+
+    @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ExamSession> sessions;
+
 }
