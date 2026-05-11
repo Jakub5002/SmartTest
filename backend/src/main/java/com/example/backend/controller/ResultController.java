@@ -1,8 +1,12 @@
 package com.example.backend.controller;
 
+import com.example.backend.model.Question;
 import com.example.backend.model.Result;
+import com.example.backend.repository.QuestionRepository;
+import com.example.backend.repository.ResultRepository;
 import com.example.backend.service.ResultService;
 import com.example.backend.service.UserService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -21,6 +26,7 @@ import java.util.UUID;
 public class ResultController {
     private final ResultService resultService;
     private final UserService userService;
+    private final QuestionRepository questionRepository;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -50,5 +56,22 @@ public class ResultController {
         List<Result> userResults = resultService.getResultsByUser(userId);
 
         return ResponseEntity.ok(userResults);
+    }
+
+    @GetMapping("/user/{userId}/exam/{examId}")
+    @Transactional
+    public ResponseEntity<?> getResultByUserAndExam(@PathVariable UUID userId, @PathVariable UUID examId) {
+        return resultService.getResultByUserAndExam(userId, examId)
+                .map(result -> {
+                    List<Question> questions = questionRepository.findByExamId(examId);
+                    int totalScore = questions.stream()
+                            .mapToInt(Question::getPoints)
+                            .sum();
+                    return ResponseEntity.ok(Map.of(
+                            "score", result.getScore(),
+                            "totalScore", totalScore
+                    ));
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }
