@@ -5,18 +5,20 @@ import { useNavigate } from 'react-router-dom';
 const RegisterPage = () => {
     const[email, setEmail] = useState('');
     const[password, setPassword] = useState('');
-    const[role, setRole] = useState('STUDENT')
+    const [isAdmin, setIsAdmin] = useState(false);
     const navigate = useNavigate();
 
     const handleRegister = async (e) => {
         e.preventDefault();
-        try{
-            await api.post('/auth/register', { email, password, role});
-            alert("Konto zalozone, mozesz sie zalogowac");
+        try {
+            await api.post('/auth/register', {
+                email,
+                password,
+                admin: isAdmin
+            });
+            alert("Konto założone!");
             navigate('/login');
-        }catch(err){
-            alert("Bład rejestracji: " + (err.response?.data?.message || "Sproboj ponownie"));
-        }
+        } catch(err) { /* ... */ }
     };
 
     return(
@@ -25,9 +27,9 @@ const RegisterPage = () => {
             <form onSubmit={handleRegister}>
                 <input type="email" placeholder="Email" onChange={e => setEmail(e.target.value)} required/><br/>
                 <input type="password" placeholder="Hasło" onChange={e => setPassword(e.target.value)} required/><br/>
-                <select onChange={e=>setRole(e.target.value)} value={role}>
-                    <option value="STUDENT">Student</option>
-                    <option value="ADMIN">Admin</option>
+                <select onChange={e => setIsAdmin(e.target.value === "true")} value={isAdmin}>
+                    <option value="false">Student</option>
+                    <option value="true">Admin</option>
                 </select><br/>
                 <button type="submit">Zarejestuj się!</button>
             </form>

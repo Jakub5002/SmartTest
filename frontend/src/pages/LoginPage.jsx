@@ -22,7 +22,7 @@ const LoginPage = () => {
             login(response.data.token);
 
             alert("Zalogowano pomyślnie!");
-            navigate('/');
+            navigate('/', { replace: true });
         } catch (err) {
             setError(err.response?.data?.message || "Błędny email lub hasło");
         }
