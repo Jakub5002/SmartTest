@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import { useAuth } from './context/AuthContext';
+import RegisterPage from "./pages/RegisterPage.jsx";
 
 function App() {
     const { user, loading } = useAuth();
@@ -9,11 +10,9 @@ function App() {
 
     return (
         <Routes>
-            {/* Jeśli nie jesteś zalogowany, zawsze lądujesz na /login */}
-            <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/" />} />
-
-            {/* Strona główna - na razie tylko napis, dopóki nie zrobisz Dashboardu */}
-            <Route path="/" element={user ? <h1>Witaj, {user.email}! Jesteś zalogowany.</h1> : <Navigate to="/login" />} />
+            <Route path="/login" element={<LoginPage/>} />
+            <Route path="/register" element={<RegisterPage/>} />
+            <Route path="/" element={user ? <Dashboard /> : <Navigate to="/login" />} />
         </Routes>
     );
 }

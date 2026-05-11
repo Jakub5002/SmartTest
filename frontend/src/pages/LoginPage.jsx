@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -28,8 +29,8 @@ const LoginPage = () => {
     };
 
     return (
-        <div style={{ maxWidth: '400px', margin: '50px auto', textAlign: 'center' }}>
-            <h2>Panel Logowania SmartTest</h2>
+        <div style={{ maxWidth: '400px', margin: '100px auto', textAlign: 'center' }}>
+            <h2 style={{ marginBottom: '40px' }}>Logowania SmartTest</h2>
             {error && <p style={{ color: 'red' }}>{error}</p>}
 
             <form onSubmit={handleSubmit}>
@@ -53,9 +54,19 @@ const LoginPage = () => {
                         style={{ width: '100%', padding: '8px' }}
                     />
                 </div>
-                <button type="submit" style={{ width: '100%', padding: '10px', cursor: 'pointer' }}>
+                <button
+                    type="submit"
+                    style={{
+                        width: '200px',
+                        padding: '10px',
+                        cursor: 'pointer',
+                        display: 'block',
+                        margin: '0 auto'
+                    }}
+                >
                     Zaloguj się
                 </button>
+                <p>Nie masz konta? <Link to="/register">Zarejestruj się</Link></p>
             </form>
         </div>
     );
