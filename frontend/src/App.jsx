@@ -20,6 +20,8 @@ import ManageExams from './pages/admin/ManageExams';
 import AvailableExams from './pages/student/AvailableExams';
 import StudentResults from './pages/student/StudentResults';
 
+import AllExams from './pages/AllExams';
+import TakeExam from './pages/TakeExam';
 function App() {
     const { user, loading } = useAuth();
 
@@ -40,12 +42,15 @@ function App() {
             <Route element={user?.role === 'ROLE_ADMIN' ? <AdminLayout /> : <Navigate to="/login" />}>
                 <Route path="/admin" element={<AdminStats />} />
                 <Route path="/admin/exams" element={<ManageExams />} />
+                <Route path="/" element={<AllExams />} />
             </Route>
 
             {/* STUDENT */}
             <Route element={user?.role === 'ROLE_STUDENT' ? <StudentLayout /> : <Navigate to="/login" />}>
                 <Route path="/student" element={<AvailableExams />} />
                 <Route path="/student/results" element={<StudentResults />} />
+                <Route path="/" element={<AllExams />} />
+                <Route path="/exam/:id" element={<TakeExam />} />
             </Route>
 
             {/* przekierowanie */}

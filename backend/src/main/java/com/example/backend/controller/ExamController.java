@@ -23,6 +23,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/exams")
 @RequiredArgsConstructor
 public class ExamController {
@@ -38,6 +39,13 @@ public class ExamController {
     @GetMapping("/test")
     public String test() {
         return "Logika egzaminów na nowym branchu działa!";
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Exam> getById(@PathVariable UUID id) {
+        return examRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
