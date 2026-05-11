@@ -21,8 +21,8 @@ public class Exam {
     @Column(nullable = false, unique = true)
     private String title;
 
-    @Column(name = "is_active")
-    private Boolean active;
+    @Column(name = "active")
+    private Boolean active = true;
 
     @Column(name = "duration_minutes", nullable = false)
     private int durationMinutes;

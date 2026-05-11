@@ -32,7 +32,7 @@ public class ExamService {
 
     @Transactional
     public ExamResult submitExam(UUID examId, ExamSubmission submission) {
-        ExamSession session = examSessionRepository.findByExamIdAndUserId(examId, submission.userId())
+        ExamSession session = examSessionRepository.findFirstByExamIdAndUserId(examId, submission.userId())
                 .orElseThrow(() -> new RuntimeException("Nie rozpocząłeś egzaminu"));
 
         if (session.isSubmitted()) {

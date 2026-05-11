@@ -10,12 +10,14 @@ import com.example.backend.repository.ExamRepository;
 import com.example.backend.repository.ExamSessionRepository;
 import com.example.backend.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,7 +31,7 @@ public class ExamSessionController {
     private final UserRepository userRepository;
     private final ClassroomRepository classroomRepository;
 
-
+    @Transactional
     @PostMapping("/start/{examId}")
     public ResponseEntity<?> startExam(@PathVariable UUID examId, @RequestParam UUID userId) {
         Exam exam = examRepository.findById(examId)
@@ -75,5 +77,13 @@ public class ExamSessionController {
         }
         examSessionRepository.save(session);
         return ResponseEntity.ok("Zapisano odpowiedzi");
+    }
+
+    @GetMapping("/status/{examId}")
+    public ResponseEntity<?> getSessionStatus(@PathVariable UUID examId, @RequestParam UUID userId) {
+        Optional<ExamSession> session = examSessionRepository.findFirstByExamIdAndUserId(examId, userId);
+        if (session.isEmpty()) return ResponseEntity.ok(Map.of("status", "NOT_STARTED"));
+        if (session.get().isSubmitted()) return ResponseEntity.ok(Map.of("status", "SUBMITTED"));
+        return ResponseEntity.ok(Map.of("status", "IN_PROGRESS"));
     }
 }

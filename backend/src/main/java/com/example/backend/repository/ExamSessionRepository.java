@@ -1,6 +1,7 @@
 package com.example.backend.repository;
 
 import com.example.backend.model.ExamSession;
+import com.example.backend.model.Result;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,5 +14,5 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, UUID> 
     Optional<ExamSession> findByExamIdAndUserId(UUID examId, UUID userId);
 
     List<ExamSession> findAllBySubmittedFalse();
-    List<ExamSession> findAllByExamId(UUID examId);
+    Optional<ExamSession> findFirstByExamIdAndUserId(UUID examId, UUID userId);
 }
