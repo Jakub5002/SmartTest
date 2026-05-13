@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-const HARDCODED_USER_ID = "5828c1b5-2ffd-41f6-bf32-0c77a2589458"; // tymczasowo
+import { getUserId } from "../auth/HelperGetIdUser.jsx";
 
 function TakeExam() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const userId = getUserId();
+
+    const token = localStorage.getItem("token");
 
     const [exam, setExam] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -15,33 +18,53 @@ function TakeExam() {
     const [timeLeft, setTimeLeft] = useState(null);
 
     useEffect(() => {
-        // Krok 1: Rozpocznij sesję
-        fetch(`http://localhost:8080/api/exam-sessions/start/${id}?userId=${HARDCODED_USER_ID}`, {
-            method: 'POST'
+        let cancelled = false;
+
+        fetch(`http://localhost:8080/api/exam-sessions/start/${id}`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
         })
             .then(res => {
+                if (cancelled) return null;
+                if (res.status === 409) {
+                    navigate('/result', { state: { examId: id } });
+                    return null;
+                }
                 if (!res.ok) return res.text().then(text => { throw new Error(text) });
                 return res.json();
             })
-            .then(() => {
-                // Krok 2: Pobierz egzamin
-                return fetch(`http://localhost:8080/api/exams/${id}`);
-            })
-            .then(res => res.json())
             .then(data => {
+                if (!data || cancelled) return;
+                return fetch(`http://localhost:8080/api/exams/${id}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+                });
+            })
+            .then(res => {
+                if (!res || cancelled) return;
+                return res.json();
+            })
+            .then(data => {
+                if (!data || cancelled) return;
                 setExam(data);
                 setTimeLeft(data.durationMinutes * 60);
                 setLoading(false);
             })
             .catch(err => {
-                setSessionError(err.message);
-                setLoading(false);
+                if (!cancelled) {
+                    setSessionError(err.message);
+                    setLoading(false);
+                }
             });
+
+        return () => {
+            cancelled = true;
+        };
     }, [id]);
 
     const handleSubmit = useCallback(() => {
         const submission = {
-            userId: HARDCODED_USER_ID,
             answers: Object.entries(answers).map(([questionId, selectedOption]) => ({
                 questionId,
                 selectedOption
@@ -50,7 +73,10 @@ function TakeExam() {
 
         fetch(`http://localhost:8080/api/exams/${id}/submit`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${localStorage.getItem("token")}`
+            },
             body: JSON.stringify(submission)
         })
             .then(res => {

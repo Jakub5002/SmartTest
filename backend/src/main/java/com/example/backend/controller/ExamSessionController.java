@@ -9,12 +9,15 @@ import com.example.backend.repository.ClassroomRepository;
 import com.example.backend.repository.ExamRepository;
 import com.example.backend.repository.ExamSessionRepository;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.service.ExamSessionService;
+import com.example.backend.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -30,20 +33,25 @@ public class ExamSessionController {
     private final ExamRepository examRepository;
     private final UserRepository userRepository;
     private final ClassroomRepository classroomRepository;
+    private final UserService userService;
+
+    private final ExamSessionService examSessionService;
 
     @Transactional
     @PostMapping("/start/{examId}")
-    public ResponseEntity<?> startExam(@PathVariable UUID examId, @RequestParam UUID userId) {
+    public ResponseEntity<?> startExam(@PathVariable UUID examId, Principal principal) {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new EntityNotFoundException("Egzamin nie istnieje"));
 
+        UUID userId = userService.getUserIdByEmail(principal.getName());
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Użytkownik nie istnieje"));
 
         List<Classroom> classroomsWithExam = classroomRepository.findAllByExamsContaining(exam);
-        boolean isStuedntInClass = classroomsWithExam.stream().anyMatch(classroom -> classroom.getStudents().contains(user));
+        boolean isStudentInClass = classroomsWithExam.stream()
+                .anyMatch(classroom -> classroom.getStudents().contains(user));
 
-        if (!isStuedntInClass && !"ROLE_ADMIN".equals((user.getRole()))){
+        if (!isStudentInClass && !"ROLE_ADMIN".equals(user.getRole())) {
             return ResponseEntity.status(403).body("Ten egzamin nie został przypisany do Twojej klasy.");
         }
 
@@ -51,21 +59,23 @@ public class ExamSessionController {
             return ResponseEntity.badRequest().body("Egzamin jest obecnie nieaktywny.");
         }
 
-        boolean alreadyStarted = examSessionRepository.findByExamIdAndUserId(examId, userId).isPresent();
-        if (alreadyStarted) {
-            return ResponseEntity.badRequest().body("Już rozpocząłeś ten egzamin.");
+        Optional<ExamSession> existingSession = examSessionRepository.findFirstByExamIdAndUserId(examId, userId);
+        if (existingSession.isPresent()) {
+            if (existingSession.get().isSubmitted()) {
+                return ResponseEntity.status(409).body("ALREADY_SUBMITTED");
+            }
+            return ResponseEntity.ok(existingSession.get());
         }
 
-        ExamSession session = new ExamSession();
-        session.setExam(exam);
-        session.setUser(user);
-        session.setStartedAt(LocalDateTime.now());
-        session.setSubmitted(false);
-
-        ExamSession savedSession = examSessionRepository.save(session);
-        return ResponseEntity.ok(savedSession);
+        try {
+            ExamSession session = examSessionService.createSession(exam, user);
+            return ResponseEntity.ok(session);
+        } catch (Exception e) {
+            return examSessionRepository.findFirstByExamIdAndUserId(examId, userId)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.status(500).build());
+        }
     }
-
     @PostMapping("/{sessionID}/auto-save")
     public ResponseEntity<?> autoSave(@PathVariable UUID sessionID,@RequestBody List<UserAnswer> partialAnswers) {
         ExamSession session = examSessionRepository.findById(sessionID).orElseThrow(()-> new EntityNotFoundException("Sesja nie istenije"));

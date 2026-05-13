@@ -1,19 +1,30 @@
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 function ExamResultPage() {
     const location = useLocation();
     const navigate = useNavigate();
-    const result = location.state?.result;
+    const [result, setResult] = useState(location.state?.result || null);
+    const examId = location.state?.examId;
     const alreadyDone = location.state?.alreadyDone;
 
-    if (!result) {
+    useEffect(() => {
+        if (!result && examId) {
+            fetch(`http://localhost:8080/api/results/my/${examId}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                }
+            })
+                .then(res => res.json())
+                .then(data => setResult(data))
+                .catch(err => console.error("Błąd pobierania wyniku:", err));
+        }
+    }, [examId, result]);
+
+    if (!result || result.percentage === undefined) {
         return (
             <div style={{ color: 'white', padding: '20px', textAlign: 'center' }}>
-                <p>Brak wyników.</p>
-                <button onClick={() => navigate('/')}
-                        style={{ padding: '10px 20px', background: '#007bff', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
-                    Wróć
-                </button>
+                <p>Ładowanie wyników...</p>
             </div>
         );
     }

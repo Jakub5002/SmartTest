@@ -3,16 +3,14 @@ package com.example.backend.service;
 import com.example.backend.dto.ExamResult;
 import com.example.backend.dto.ExamSubmission;
 import com.example.backend.dto.UserAnswer;
-import com.example.backend.model.ExamSession;
-import com.example.backend.model.Question;
-import com.example.backend.model.Result;
-import com.example.backend.model.StudentAnswer;
+import com.example.backend.model.*;
 import com.example.backend.repository.ExamSessionRepository;
 import com.example.backend.repository.QuestionRepository;
 import com.example.backend.repository.ResultRepository;
 import com.example.backend.repository.StudentAnswerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -31,8 +29,8 @@ public class ExamService {
     private final StudentAnswerRepository studentAnswerRepository;
 
     @Transactional
-    public ExamResult submitExam(UUID examId, ExamSubmission submission) {
-        ExamSession session = examSessionRepository.findFirstByExamIdAndUserId(examId, submission.userId())
+    public ExamResult submitExam(UUID examId, UUID userId, ExamSubmission submission) {
+        ExamSession session = examSessionRepository.findFirstByExamIdAndUserId(examId, userId)
                 .orElseThrow(() -> new RuntimeException("Nie rozpocząłeś egzaminu"));
 
         if (session.isSubmitted()) {

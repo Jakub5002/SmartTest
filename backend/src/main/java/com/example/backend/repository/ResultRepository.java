@@ -2,6 +2,8 @@ package com.example.backend.repository;
 
 import com.example.backend.model.Result;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,5 +14,7 @@ import java.util.UUID;
 public interface ResultRepository extends JpaRepository<Result, UUID> {
     List<Result> findByUserId(UUID userId);
     List<Result> findByExamId(UUID examId);
-    Optional<Result> findFirstByUserIdAndExamId(UUID userId, UUID examId);
+    @Query("SELECT r FROM Result r WHERE r.user.id = :userId AND r.exam.id = :examId ORDER BY r.finishedAt DESC")
+    List<Result> findByUserIdAndExamIdOrderByFinishedAtDesc(@Param("userId") UUID userId, @Param("examId") UUID examId);
+
 }

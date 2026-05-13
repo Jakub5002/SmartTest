@@ -64,9 +64,10 @@ public class ExamController {
     }
 
     @PostMapping("/{examId}/submit")
-    public ResponseEntity<?> submitExam(@PathVariable UUID examId, @RequestBody ExamSubmission submission) {
+    public ResponseEntity<?> submitExam(@PathVariable UUID examId, @RequestBody ExamSubmission submission, Principal principal) {
         try {
-            ExamResult result = examService.submitExam(examId, submission);
+            UUID userId = userService.getUserIdByEmail(principal.getName());
+            ExamResult result = examService.submitExam(examId, userId, submission);
             return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

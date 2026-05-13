@@ -11,7 +11,6 @@ import java.util.UUID;
 
 @Repository
 public interface ExamSessionRepository extends JpaRepository<ExamSession, UUID> {
-    Optional<ExamSession> findByExamIdAndUserId(UUID examId, UUID userId);
 
     List<ExamSession> findAllBySubmittedFalse();
     Optional<ExamSession> findFirstByExamIdAndUserId(UUID examId, UUID userId);

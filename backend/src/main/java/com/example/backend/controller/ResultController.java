@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -70,6 +71,29 @@ public class ResultController {
                     return ResponseEntity.ok(Map.of(
                             "score", result.getScore(),
                             "totalScore", totalScore
+                    ));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+    @GetMapping("/my/{examId}")
+    @Transactional
+    @PreAuthorize("hasAnyRole('STUDENT', 'ADMIN')")
+    public ResponseEntity<?> getMyResultByExam(@PathVariable UUID examId, Principal principal) {
+        UUID userId = userService.getUserIdByEmail(principal.getName());
+        System.out.println("Szukam wyniku dla userId: " + userId + " examId: " + examId);
+        Optional<Result> res = resultService.getResultByUserAndExam(userId, examId);
+        System.out.println("Znaleziono: " + res.isPresent());
+        return resultService.getResultByUserAndExam(userId, examId)
+                .map(result -> {
+                    List<Question> questions = questionRepository.findByExamId(examId);
+                    int totalScore = questions.stream()
+                            .mapToInt(Question::getPoints)
+                            .sum();
+                    double percentage = totalScore > 0 ? ((double) result.getScore() / totalScore) * 100 : 0;
+                    return ResponseEntity.ok(Map.of(
+                            "score", result.getScore(),
+                            "totalScore", totalScore,
+                            "percentage", percentage
                     ));
                 })
                 .orElse(ResponseEntity.notFound().build());

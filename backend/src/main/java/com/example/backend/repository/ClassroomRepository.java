@@ -15,7 +15,8 @@ import java.util.UUID;
 @Repository
 public interface ClassroomRepository extends JpaRepository<Classroom, UUID> {
     Optional<Classroom> findById(UUID id);
-    List<Classroom> findAllByExamsContaining(Exam exam);
+    @Query("SELECT DISTINCT c FROM Classroom c JOIN c.students s JOIN c.exams e WHERE e = :exam")
+    List<Classroom> findAllByExamsContaining(@Param("exam") Exam exam);
     List<Classroom> findAllByStudentsContaining(User student);
 
     @Query("SELECT DISTINCT c FROM Classroom c JOIN FETCH c.exams JOIN FETCH c.students WHERE :user MEMBER OF c.students")

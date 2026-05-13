@@ -31,6 +31,7 @@ public class ResultService {
     }
 
     public Optional<Result> getResultByUserAndExam(UUID userId, UUID examId) {
-        return resultRepository.findFirstByUserIdAndExamId(userId, examId);
+        List<Result> results = resultRepository.findByUserIdAndExamIdOrderByFinishedAtDesc(userId, examId);
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 }
