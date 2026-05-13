@@ -3,7 +3,10 @@ package com.example.backend.model;
 import jakarta.persistence.*; // Ważne, żeby importy były z jakarta
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Query;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -33,6 +36,7 @@ public class Classroom {
             inverseJoinColumns = @JoinColumn(name = "exam_id")
     )
     private Set<Exam> exams = new HashSet<>();
+
 
 
 }

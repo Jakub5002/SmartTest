@@ -36,11 +36,6 @@ public class ExamController {
     private final ExamService examService;
     private final UserService userService;
 
-    @GetMapping("/test")
-    public String test() {
-        return "Logika egzaminów na nowym branchu działa!";
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<Exam> getById(@PathVariable UUID id) {
         return examRepository.findById(id)
@@ -111,15 +106,23 @@ public class ExamController {
 
         return ResponseEntity.noContent().build();
     }
-
+    @Transactional
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('STUDENT', 'ADMIN')")
-    public ResponseEntity<Set<Exam>> getMyAvaliableExams(Principal principal) {
+    public ResponseEntity<Set<ExamDTO>> getMyAvaliableExams(Principal principal) {
         UUID userId = userService.getUserIdByEmail(principal.getName());
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Uzytkownik nie istnieje"));
-        List<Classroom> userClassrooms = classroomRepository.findAllByStudentsContaining(user);
-        Set<Exam> avaliableExams = userClassrooms.stream().flatMap(classroom -> classroom.getExams().stream()).filter(Exam::getActive).collect(Collectors.toSet());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Uzytkownik nie istnieje"));
 
-        return  ResponseEntity.ok(avaliableExams);
+        List<Classroom> userClassrooms = classroomRepository.findAllByStudentsContainingWithExams(user);
+
+        Set<ExamDTO> availableExams = userClassrooms.stream()
+                .flatMap(classroom -> classroom.getExams().stream())
+                .filter(Exam::getActive)
+                .map(exam -> new ExamDTO(exam.getId(), exam.getTitle(), exam.getDurationMinutes(), exam.getActive()))
+                .collect(Collectors.toSet());
+
+        return ResponseEntity.ok(availableExams);
     }
+
 }

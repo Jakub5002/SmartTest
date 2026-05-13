@@ -1,17 +1,19 @@
 import { useNavigate } from 'react-router-dom';
 
-const HARDCODED_USER_ID = "5828c1b5-2ffd-41f6-bf32-0c77a2589458";
+import { getUserId } from "../auth/HelperGetIdUser.jsx";
+
+const userId = getUserId();
 
 function ExamCard({ exam }) {
     const navigate = useNavigate();
 
 
     const handleStart = () => {
-        fetch(`http://localhost:8080/api/exam-sessions/status/${exam.id}?userId=${HARDCODED_USER_ID}`)
+        fetch(`http://localhost:8080/api/exam-sessions/status/${exam.id}?userId=${userId}`)
             .then(res => res.json())
             .then(data => {
                 if (data.status === "SUBMITTED") {
-                    fetch(`http://localhost:8080/api/results/user/${HARDCODED_USER_ID}/exam/${exam.id}`)
+                    fetch(`http://localhost:8080/api/results/user/${userId}/exam/${exam.id}`)
                         .then(res => res.json())
                         .then(result => {
                             console.log("Wynik z backendu:", result);
