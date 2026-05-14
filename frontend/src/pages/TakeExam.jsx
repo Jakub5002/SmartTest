@@ -1,67 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-import { getUserId } from "../auth/HelperGetIdUser.jsx";
-
 function TakeExam() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const userId = getUserId();
-
-    const token = localStorage.getItem("token");
 
     const [exam, setExam] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [sessionError, setSessionError] = useState(null); // błąd startu sesji
+    const [sessionError, setSessionError] = useState(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState({});
     const [timeLeft, setTimeLeft] = useState(null);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        fetch(`http://localhost:8080/api/exam-sessions/start/${id}`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`
-            }
-        })
-            .then(res => {
-                if (cancelled) return null;
-                if (res.status === 409) {
-                    navigate('/result', { state: { examId: id } });
-                    return null;
-                }
-                if (!res.ok) return res.text().then(text => { throw new Error(text) });
-                return res.json();
-            })
-            .then(data => {
-                if (!data || cancelled) return;
-                return fetch(`http://localhost:8080/api/exams/${id}`, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-                });
-            })
-            .then(res => {
-                if (!res || cancelled) return;
-                return res.json();
-            })
-            .then(data => {
-                if (!data || cancelled) return;
-                setExam(data);
-                setTimeLeft(data.durationMinutes * 60);
-                setLoading(false);
-            })
-            .catch(err => {
-                if (!cancelled) {
-                    setSessionError(err.message);
-                    setLoading(false);
-                }
-            });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [id]);
 
     const handleSubmit = useCallback(() => {
         const submission = {
@@ -86,8 +35,64 @@ function TakeExam() {
             .then(result => {
                 navigate('/result', { state: { result } });
             })
-            .catch(err => console.error("Błąd submitu:", err.message));
+            .catch(() => {
+                navigate('/result', { state: { examId: id } });
+            });
     }, [answers, id, navigate]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        fetch(`http://localhost:8080/api/exam-sessions/start/${id}`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
+        })
+            .then(res => {
+                if (cancelled) return null;
+                if (res.status === 409) {
+                    navigate('/result', { state: { examId: id } });
+                    return null;
+                }
+                if (!res.ok) return res.text().then(text => { throw new Error(text) });
+                return res.json();
+            })
+            .then(session => {
+                if (!session || cancelled) return;
+                const startedAt = new Date(session.startedAt);
+
+                return fetch(`http://localhost:8080/api/exams/${id}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+                })
+                    .then(res => res.json())
+                    .then(examData => {
+                        if (!examData || cancelled) return;
+
+                        setExam(examData);
+                        const endTime = new Date(startedAt.getTime() + examData.durationMinutes * 60 * 1000);
+                        const remaining = Math.floor((endTime - new Date()) / 1000);
+
+                        if (remaining <= 0) {
+                            handleSubmit();
+                            return;
+                        }
+
+                        setTimeLeft(remaining);
+                        setLoading(false);
+                    });
+            })
+            .catch(err => {
+                if (!cancelled) {
+                    setSessionError(err.message);
+                    setLoading(false);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [id]);
 
     useEffect(() => {
         if (timeLeft === null) return;
@@ -108,7 +113,7 @@ function TakeExam() {
     };
 
     const handleAnswerSelect = (questionId, selectedOption) => {
-        setAnswers({ ...answers, [questionId]: selectedOption });
+        setAnswers(prev => ({ ...prev, [questionId]: selectedOption }));
     };
 
     const nextQuestion = () => {
@@ -121,12 +126,11 @@ function TakeExam() {
             setCurrentQuestionIndex(currentQuestionIndex - 1);
     };
 
-    // Błąd sesji (np. już rozpocząłeś, egzamin nieaktywny)
     if (sessionError) return (
         <div style={{ color: 'white', padding: '40px', textAlign: 'center' }}>
             <h2>⚠️ {sessionError}</h2>
             <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/student')}
                 style={{ marginTop: '20px', padding: '10px 24px', borderRadius: '8px',
                     background: '#007bff', color: 'white', border: 'none', cursor: 'pointer' }}
             >
@@ -137,7 +141,15 @@ function TakeExam() {
 
     if (loading) return <div style={{ color: 'white', padding: '20px' }}>Ładowanie...</div>;
     if (!exam || !exam.questions || exam.questions.length === 0)
-        return <div style={{ color: 'white' }}>Brak pytań.</div>;
+        return <div style={{ color: 'white' }}>Brak pytań.
+            <button
+                onClick={() => navigate('/student')}
+                style={{ marginTop: '20px', padding: '10px 24px', borderRadius: '8px',
+                    background: '#007bff', color: 'white', border: 'none', cursor: 'pointer' }}
+            >
+                Wróć do listy egzaminów
+            </button>
+    </div>;
 
     const currentQuestion = exam.questions[currentQuestionIndex];
 
@@ -167,7 +179,7 @@ function TakeExam() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {currentQuestion.options.map((optionText, index) => {
-                        const letter = String.fromCharCode(65 + index); // A, B, C, D
+                        const letter = String.fromCharCode(65 + index);
                         return (
                             <label key={index} style={{
                                 padding: '15px',

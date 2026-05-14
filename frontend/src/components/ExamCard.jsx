@@ -16,7 +16,6 @@ function ExamCard({ exam }) {
                     fetch(`http://localhost:8080/api/results/user/${userId}/exam/${exam.id}`)
                         .then(res => res.json())
                         .then(result => {
-                            console.log("Wynik z backendu:", result);
                             const resultWithPercentage = {
                                 ...result,
                                 percentage: result.totalScore > 0
@@ -41,6 +40,7 @@ function ExamCard({ exam }) {
             color: 'white'
         }}>
             <h3>{exam.title}</h3>
+            <p style={{ color: '#aaa', fontSize: '0.9rem' }}>Klasa: {exam.classroomName}</p>
             <p>Czas: {exam.durationMinutes} min</p>
             <button
                 onClick={handleStart}

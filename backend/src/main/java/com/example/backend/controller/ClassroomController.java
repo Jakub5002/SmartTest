@@ -30,4 +30,5 @@ public class ClassroomController {
         classroomService.addExamToClass(classId, examId);
         return ResponseEntity.ok("Egzamin został przypisany do klasy.");
     }
+
 }

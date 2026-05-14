@@ -6,5 +6,6 @@ public record ExamDTO(
         UUID id,
         String title,
         Integer durationMinutes,
-        Boolean isActive
+        Boolean isActive,
+        String classroomName
 ) {}

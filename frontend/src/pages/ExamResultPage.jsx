@@ -24,7 +24,14 @@ function ExamResultPage() {
     if (!result || result.percentage === undefined) {
         return (
             <div style={{ color: 'white', padding: '20px', textAlign: 'center' }}>
-                <p>Ładowanie wyników...</p>
+                <p>Błąd ładowania</p>
+                <button
+                    onClick={() => navigate('/student')}
+                    style={{ marginTop: '20px', padding: '10px 24px', borderRadius: '8px',
+                        background: '#007bff', color: 'white', border: 'none', cursor: 'pointer' }}
+                >
+                    Wróć do listy egzaminów
+                </button>
             </div>
         );
     }

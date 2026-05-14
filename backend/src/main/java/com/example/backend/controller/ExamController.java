@@ -17,9 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.time.LocalDateTime;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -41,11 +39,6 @@ public class ExamController {
         return examRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
-    }
-
-    @GetMapping
-    public List<Exam> getAll() {
-        return examRepository.findAll();
     }
 
     @PostMapping
@@ -118,12 +111,44 @@ public class ExamController {
         List<Classroom> userClassrooms = classroomRepository.findAllByStudentsContainingWithExams(user);
 
         Set<ExamDTO> availableExams = userClassrooms.stream()
-                .flatMap(classroom -> classroom.getExams().stream())
-                .filter(Exam::getActive)
-                .map(exam -> new ExamDTO(exam.getId(), exam.getTitle(), exam.getDurationMinutes(), exam.getActive()))
+                .flatMap(classroom -> classroom.getExams().stream()
+                        .filter(Exam::getActive)
+                        .map(exam -> new ExamDTO(
+                                exam.getId(),
+                                exam.getTitle(),
+                                exam.getDurationMinutes(),
+                                exam.getActive(),
+                                classroom.getName()
+                        )))
                 .collect(Collectors.toSet());
 
         return ResponseEntity.ok(availableExams);
+    }
+
+    @Transactional
+    @GetMapping
+    public List<Map<String, Object>> getAll() {
+        List<Exam> exams = examRepository.findAll();
+        List<Classroom> classrooms = classroomRepository.findAll();
+
+        return exams.stream().map(exam -> {
+            Map<String, Object> examMap = new HashMap<>();
+            examMap.put("id", exam.getId());
+            examMap.put("title", exam.getTitle());
+            examMap.put("durationMinutes", exam.getDurationMinutes());
+            examMap.put("active", exam.getActive());
+            System.out.println("Liczba classroom: " + classrooms.size());
+
+            String classroomName = classrooms.stream()
+                    .filter(c -> c.getExams().stream()
+                            .anyMatch(e -> e.getId().equals(exam.getId()))) // <- porównanie po UUID
+                    .map(Classroom::getName)
+                    .findFirst()
+                    .orElse("Brak klasy");
+            examMap.put("classroomName", classroomName);
+
+            return examMap;
+        }).collect(Collectors.toList());
     }
 
 }
