@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -27,5 +28,10 @@ public class ResultService {
 
     public Result getResultDetails(UUID resultId){
         return resultRepository.findById(resultId).orElseThrow(() -> new RuntimeException("Nie znaleznionow wuyniku o ID " + resultId));
+    }
+
+    public Optional<Result> getResultByUserAndExam(UUID userId, UUID examId) {
+        List<Result> results = resultRepository.findByUserIdAndExamIdOrderByFinishedAtDesc(userId, examId);
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 }

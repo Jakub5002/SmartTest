@@ -20,6 +20,9 @@ import ManageExams from './pages/admin/ManageExams';
 import AvailableExams from './pages/student/AvailableExams';
 import StudentResults from './pages/student/StudentResults';
 
+import AllExams from './pages/AllExams';
+import TakeExam from './pages/TakeExam';
+import ExamResultPage from "./pages/ExamResultPage.jsx";
 function App() {
     const { user, loading } = useAuth();
 
@@ -45,7 +48,10 @@ function App() {
             {/* STUDENT */}
             <Route element={user?.role === 'ROLE_STUDENT' ? <StudentLayout /> : <Navigate to="/login" />}>
                 <Route path="/student" element={<AvailableExams />} />
+                <Route paht="/exams" element={<AllExams/>} />
                 <Route path="/student/results" element={<StudentResults />} />
+                <Route path="/exam/:id" element={<TakeExam />} />
+                <Route path="/result" element={<ExamResultPage />} />
             </Route>
 
             {/* przekierowanie */}

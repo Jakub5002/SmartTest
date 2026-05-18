@@ -17,12 +17,11 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.time.LocalDateTime;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/exams")
 @RequiredArgsConstructor
 public class ExamController {
@@ -35,14 +34,11 @@ public class ExamController {
     private final ExamService examService;
     private final UserService userService;
 
-    @GetMapping("/test")
-    public String test() {
-        return "Logika egzaminów na nowym branchu działa!";
-    }
-
-    @GetMapping
-    public List<Exam> getAll() {
-        return examRepository.findAll();
+    @GetMapping("/{id}")
+    public ResponseEntity<Exam> getById(@PathVariable UUID id) {
+        return examRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -61,9 +57,10 @@ public class ExamController {
     }
 
     @PostMapping("/{examId}/submit")
-    public ResponseEntity<?> submitExam(@PathVariable UUID examId, @RequestBody ExamSubmission submission) {
+    public ResponseEntity<?> submitExam(@PathVariable UUID examId, @RequestBody ExamSubmission submission, Principal principal) {
         try {
-            ExamResult result = examService.submitExam(examId, submission);
+            UUID userId = userService.getUserIdByEmail(principal.getName());
+            ExamResult result = examService.submitExam(examId, userId, submission);
             return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -103,15 +100,55 @@ public class ExamController {
 
         return ResponseEntity.noContent().build();
     }
-
+    @Transactional
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('STUDENT', 'ADMIN')")
-    public ResponseEntity<Set<Exam>> getMyAvaliableExams(Principal principal) {
+    public ResponseEntity<Set<ExamDTO>> getMyAvaliableExams(Principal principal) {
         UUID userId = userService.getUserIdByEmail(principal.getName());
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Uzytkownik nie istnieje"));
-        List<Classroom> userClassrooms = classroomRepository.findAllByStudentsContaining(user);
-        Set<Exam> avaliableExams = userClassrooms.stream().flatMap(classroom -> classroom.getExams().stream()).filter(Exam::getActive).collect(Collectors.toSet());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Uzytkownik nie istnieje"));
 
-        return  ResponseEntity.ok(avaliableExams);
+        List<Classroom> userClassrooms = classroomRepository.findAllByStudentsContainingWithExams(user);
+
+        Set<ExamDTO> availableExams = userClassrooms.stream()
+                .flatMap(classroom -> classroom.getExams().stream()
+                        .filter(Exam::getActive)
+                        .map(exam -> new ExamDTO(
+                                exam.getId(),
+                                exam.getTitle(),
+                                exam.getDurationMinutes(),
+                                exam.getActive(),
+                                classroom.getName()
+                        )))
+                .collect(Collectors.toSet());
+
+        return ResponseEntity.ok(availableExams);
     }
+
+    @Transactional
+    @GetMapping
+    public List<Map<String, Object>> getAll() {
+        List<Exam> exams = examRepository.findAll();
+        List<Classroom> classrooms = classroomRepository.findAll();
+
+        return exams.stream().map(exam -> {
+            Map<String, Object> examMap = new HashMap<>();
+            examMap.put("id", exam.getId());
+            examMap.put("title", exam.getTitle());
+            examMap.put("durationMinutes", exam.getDurationMinutes());
+            examMap.put("active", exam.getActive());
+            System.out.println("Liczba classroom: " + classrooms.size());
+
+            String classroomName = classrooms.stream()
+                    .filter(c -> c.getExams().stream()
+                            .anyMatch(e -> e.getId().equals(exam.getId()))) // <- porównanie po UUID
+                    .map(Classroom::getName)
+                    .findFirst()
+                    .orElse("Brak klasy");
+            examMap.put("classroomName", classroomName);
+
+            return examMap;
+        }).collect(Collectors.toList());
+    }
+
 }
