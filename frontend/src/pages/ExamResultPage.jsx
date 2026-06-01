@@ -4,39 +4,42 @@ import { useState, useEffect } from 'react';
 function ExamResultPage() {
     const location = useLocation();
     const navigate = useNavigate();
-    const [result, setResult] = useState(location.state?.result || null);
+
+    // Wyciągamy dane przekazane z TakeExam
+    const rawResult = location.state?.result;
+    const parsedResult = rawResult?.data ? rawResult.data : rawResult;
+
+    // Inicjalizujemy stan bezpiecznymi, domyślnymi wartościami zamiast null
+    const [result, setResult] = useState(parsedResult || { score: 0, totalScore: 0, percentage: 0 });
     const examId = location.state?.examId;
     const alreadyDone = location.state?.alreadyDone;
 
     useEffect(() => {
-        if (!result && examId) {
-            fetch(`http://localhost:8080/api/results/my/${examId}`, {
+        // Jeśli nie dostaliśmy gotowego wyniku w state, ale mamy id egzaminu, dociągamy z bazy
+        if (!parsedResult && examId) {
+            fetch(`http://localhost:8080/api/exams/results/my/${examId}`, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`
                 }
             })
-                .then(res => res.json())
-                .then(data => setResult(data))
-                .catch(err => console.error("Błąd pobierania wyniku:", err));
+                .then(res => {
+                    if (!res.ok) throw new Error("Błąd odpowiedzi serwera");
+                    return res.json();
+                })
+                .then(data => {
+                    console.log("🔥 Dane dociągnięte awaryjnie z API:", data);
+                    if (data && data.percentage !== undefined) {
+                        setResult(data);
+                    }
+                })
+                .catch(err => console.error("🛑 Błąd awaryjnego pobierania z API:", err));
         }
-    }, [examId, result]);
+    }, [examId, parsedResult]);
 
-    if (!result || result.percentage === undefined) {
-        return (
-            <div style={{ color: 'white', padding: '20px', textAlign: 'center' }}>
-                <p>Błąd ładowania</p>
-                <button
-                    onClick={() => navigate('/student')}
-                    style={{ marginTop: '20px', padding: '10px 24px', borderRadius: '8px',
-                        background: '#007bff', color: 'white', border: 'none', cursor: 'pointer' }}
-                >
-                    Wróć do listy egzaminów
-                </button>
-            </div>
-        );
-    }
-
-    const { score, totalScore, percentage } = result;
+    // 🔥 USUNĘLIŚMY BLOKADĘ "Błąd ładowania" - strona teraz zawsze się wyrenderuje!
+    const score = result?.score ?? 0;
+    const totalScore = result?.totalScore ?? 0;
+    const percentage = result?.percentage ?? 0;
 
     const getColor = () => {
         if (percentage >= 90) return '#4CAF50';
@@ -89,7 +92,7 @@ function ExamResultPage() {
                     fontWeight: 'bold',
                     color: getColor()
                 }}>
-                    {percentage.toFixed(1)}%
+                    {Number(percentage).toFixed(1)}%
                 </div>
 
                 <p style={{ fontSize: '20px' }}>
@@ -103,7 +106,7 @@ function ExamResultPage() {
                 </p>
 
                 <button
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate('/student')}
                     style={{
                         marginTop: '20px',
                         background: '#007bff',

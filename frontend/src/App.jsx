@@ -15,14 +15,19 @@ import ProfilePage from './pages/ProfilePage';
 // STRONY ADMINA
 import AdminStats from './pages/admin/AdminStats';
 import ManageExams from './pages/admin/ManageExams';
+import ClassroomManagement from './pages/admin/ClassroomManagement';
+import ExamCreator from './pages/admin/ExamCreator';
 
 // STRONY STUDENTA
 import AvailableExams from './pages/student/AvailableExams';
 import StudentResults from './pages/student/StudentResults';
-
+import ExamResultPage from "./pages/ExamResultPage.jsx";
 import AllExams from './pages/AllExams';
 import TakeExam from './pages/TakeExam';
-import ExamResultPage from "./pages/ExamResultPage.jsx";
+
+
+
+
 function App() {
     const { user, loading } = useAuth();
 
@@ -42,13 +47,15 @@ function App() {
             {/* ADMIN  */}
             <Route element={user?.role === 'ROLE_ADMIN' ? <AdminLayout /> : <Navigate to="/login" />}>
                 <Route path="/admin" element={<AdminStats />} />
-                <Route path="/admin/exams" element={<ManageExams />} />
+                <Route path="/admin/classrooms" element={<ClassroomManagement />} />
+                <Route path="/admin/exams" element={<ExamCreator />} />
+
             </Route>
 
             {/* STUDENT */}
             <Route element={user?.role === 'ROLE_STUDENT' ? <StudentLayout /> : <Navigate to="/login" />}>
                 <Route path="/student" element={<AvailableExams />} />
-                <Route paht="/exams" element={<AllExams/>} />
+                <Route path="/exams" element={<AllExams/>} />
                 <Route path="/student/results" element={<StudentResults />} />
                 <Route path="/exam/:id" element={<TakeExam />} />
                 <Route path="/result" element={<ExamResultPage />} />

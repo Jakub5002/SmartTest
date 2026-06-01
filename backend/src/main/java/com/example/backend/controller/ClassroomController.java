@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -14,14 +15,21 @@ import java.util.UUID;
 public class ClassroomController {
     private final ClassroomService classroomService;
 
+    @GetMapping
+    public ResponseEntity<List<Classroom>> getAllClassrooms() {
+        return ResponseEntity.ok(classroomService.getAllClassrooms());
+    }
+
+
+
     @PostMapping
     public ResponseEntity<Classroom> create(@RequestBody String name){
         return ResponseEntity.ok(classroomService.createClassroom(name));
     }
 
-    @PostMapping("/{classId}/students/{userId}")
-    public ResponseEntity<String> addStudent(@PathVariable UUID classId, @PathVariable UUID userId ){
-        classroomService.addStudentToClass(classId, userId);
+    @PostMapping("/{classId}/students")
+    public ResponseEntity<String> addStudent(@PathVariable UUID classId, @RequestParam String email) {
+        classroomService.addStudentToClassByEmail(classId, email);
         return ResponseEntity.ok("Student został dodany do klasy.");
     }
 

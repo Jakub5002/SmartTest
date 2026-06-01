@@ -27,11 +27,12 @@ public class JwtUtils {
         this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    public String generateToken(String email, List<String> roles){
+    public String generateToken(String email, List<String> roles, java.util.UUID userId){
         return Jwts.builder().
                 setSubject(email).
                 claim("roles", roles).
-                setIssuedAt(new Date()).
+                claim("userId", userId.toString()). // 🔥 DODAJEMY KLUCZ userId DO TOKENU
+                        setIssuedAt(new Date()).
                 setExpiration(new Date((new Date()).getTime()+jwtExpirationMs)).
                 signWith(key, SignatureAlgorithm.HS256).
                 compact();

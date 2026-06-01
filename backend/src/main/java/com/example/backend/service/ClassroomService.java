@@ -50,7 +50,23 @@ public class ClassroomService {
         classroomRepository.save(classroom);
     }
 
-    public List<Classroom> getAllClassroms(){
+    @Transactional
+    public void addStudentToClassByEmail(UUID classId, String email) {
+        Classroom classroom = classroomRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Nie znaleziono klasy o podanym ID"));
+
+        User student = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Nie znaleziono studenta o e-mailu: " + email));
+
+        if (!"ROLE_STUDENT".equals(student.getRole())) {
+            throw new RuntimeException("Podany użytkownik nie jest studentem!");
+        }
+
+        classroom.getStudents().add(student);
+        classroomRepository.save(classroom);
+    }
+
+    public List<Classroom> getAllClassrooms(){
         return classroomRepository.findAll();
     }
 }

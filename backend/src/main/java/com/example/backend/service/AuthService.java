@@ -42,7 +42,7 @@ public class AuthService {
         if (passwordEncoder.matches(password, user.getPassword())) {
 
             List<String> roles = List.of(user.getRole());
-            return jwtUtils.generateToken(email, roles);
+            return jwtUtils.generateToken(user.getEmail(), roles, user.getId());
         }
         throw new RuntimeException("Błędne dane ");
     }
