@@ -1,5 +1,6 @@
 package com.example.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,7 +14,15 @@ public record ExamRequest(
         @Min(value = 1, message = "Czas trwania musi być większy niż 0")
         Integer durationMinutes,
 
-        Boolean
-        isActive,
+        @JsonProperty("isActive")
+        Boolean active,
+
+        @NotNull
         UUID createdBy
-) {}
+
+
+) {
+        public Boolean isActive() {
+                return this.active;
+        }
+}

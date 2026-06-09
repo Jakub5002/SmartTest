@@ -26,13 +26,13 @@ const AdminLayout = () => {
 
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '15px', flex: 1 }}>
                     <Link to="/admin" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
-                        📈 Statystyki
+                        📈 Statystyki i Wyniki
+                    </Link>
+                    <Link to="/admin/classrooms" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
+                        🏫 Zarządzaj Klasami
                     </Link>
                     <Link to="/admin/exams" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
-                        📝 Zarządzaj Egzaminami
-                    </Link>
-                    <Link to="/admin/users" style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold' }}>
-                        👥 Użytkownicy
+                        📝 Kreator Egzaminów
                     </Link>
 
                     <hr style={{ width: '100%', border: '0.5px solid rgba(255,255,255,0.2)', margin: '10px 0' }} />

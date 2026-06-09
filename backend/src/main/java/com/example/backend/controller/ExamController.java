@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+
 import java.security.Principal;
 import java.time.LocalDateTime;
 
@@ -33,6 +34,7 @@ public class ExamController {
     private  final ClassroomRepository classroomRepository;
     private final ExamService examService;
     private final UserService userService;
+    private final ResultRepository resultRepository;
 
     @GetMapping("/{id}")
     public ResponseEntity<Exam> getById(@PathVariable UUID id) {
@@ -100,6 +102,7 @@ public class ExamController {
 
         return ResponseEntity.noContent().build();
     }
+
     @Transactional
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('STUDENT', 'ADMIN')")
@@ -151,4 +154,106 @@ public class ExamController {
         }).collect(Collectors.toList());
     }
 
+
+    @Transactional
+    @GetMapping("/admin/stats")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<List<Map<String, Object>>> getAdminStats() {
+        List<Result> results = resultRepository.findAll();
+
+        List<Map<String, Object>> statsList = results.stream().map(result -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", result.getId());
+            map.put("studentEmail", result.getUser() != null ? result.getUser().getEmail() : "Nieznany");
+            map.put("examTitle", result.getExam() != null ? result.getExam().getTitle() : "Egzamin usunięty");
+            map.put("score", result.getScore());
+
+            int maxPoints = 0;
+            if (result.getExam() != null) {
+                List<Question> questions = questionRepository.findByExamId(result.getExam().getId());
+                maxPoints = questions.stream().mapToInt(Question::getPoints).sum();
+            }
+            map.put("maxPoints", maxPoints);
+
+            // Formatowanie daty zakończenia
+            if (result.getFinishedAt() != null) {
+                String formattedDate = result.getFinishedAt().toString().replace("T", " ");
+                if (formattedDate.length() > 16) {
+                    formattedDate = formattedDate.substring(0, 16);
+                }
+                map.put("finishedAt", formattedDate);
+            } else {
+                map.put("finishedAt", "Brak daty");
+            }
+
+            return map;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(statsList);
+    }
+
+    @Transactional
+    @GetMapping("/results/my/{examId}")
+    @PreAuthorize("hasRole('ROLE_STUDENT')")
+    public ResponseEntity<?> getSpecificExamResult(@PathVariable UUID examId, Principal principal) {
+        UUID userId = userService.getUserIdByEmail(principal.getName());
+
+        Optional<Result> oResult = resultRepository.findAll().stream()
+                .filter(r -> r.getExam() != null && r.getExam().getId().equals(examId))
+                .filter(r -> r.getUser() != null && r.getUser().getId().equals(userId))
+                .findFirst();
+
+        if (oResult.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Result result = oResult.get();
+
+        List<Question> questions = questionRepository.findByExamId(examId);
+        int totalScore = questions.stream().mapToInt(Question::getPoints).sum();
+
+        double percentage = totalScore > 0 ? ((double) result.getScore() / totalScore) * 100 : 0;
+
+        return ResponseEntity.ok(new ExamResult(result.getScore(), totalScore, percentage));
+    }
+
+    @Transactional
+    @GetMapping("/my/results")
+    @PreAuthorize("hasRole('ROLE_STUDENT')")
+    public ResponseEntity<List<Map<String, Object>>> getMyResults(Principal principal) {
+        UUID userId = userService.getUserIdByEmail(principal.getName());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Użytkownik nie istnieje"));
+
+        List<Result> userResults = resultRepository.findByUser(user);
+
+        List<Map<String, Object>> statsList = userResults.stream().map(result -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", result.getId());
+            map.put("examTitle", result.getExam() != null ? result.getExam().getTitle() : "Egzamin usunięty");
+            map.put("score", result.getScore());
+
+            int maxPoints = 0;
+            if (result.getExam() != null) {
+                List<Question> questions = questionRepository.findByExamId(result.getExam().getId());
+                maxPoints = questions.stream().mapToInt(Question::getPoints).sum();
+            }
+            map.put("maxPoints", maxPoints);
+
+            if (result.getFinishedAt() != null) {
+                String formattedDate = result.getFinishedAt().toString().replace("T", " ");
+                if (formattedDate.length() > 16) {
+                    formattedDate = formattedDate.substring(0, 16);
+                }
+                map.put("finishedAt", formattedDate);
+            } else {
+                map.put("finishedAt", "Brak daty");
+            }
+
+            return map;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(statsList);
+    }
 }

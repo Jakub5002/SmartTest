@@ -33,7 +33,7 @@ function TakeExam() {
                 return res.json();
             })
             .then(result => {
-                navigate('/result', { state: { result } });
+                navigate('/result', { state: { result, examId: id } });
             })
             .catch(() => {
                 navigate('/result', { state: { examId: id } });
@@ -52,7 +52,8 @@ function TakeExam() {
             .then(res => {
                 if (cancelled) return null;
                 if (res.status === 409) {
-                    navigate('/result', { state: { examId: id } });
+                    // 🔥 Jeśli student już pisał ten test, kierujemy na poprawne /student/results
+                    navigate('/student/results', { state: { examId: id, alreadyDone: true } });
                     return null;
                 }
                 if (!res.ok) return res.text().then(text => { throw new Error(text) });
@@ -92,7 +93,7 @@ function TakeExam() {
         return () => {
             cancelled = true;
         };
-    }, [id]);
+    }, [id, navigate, handleSubmit]);
 
     useEffect(() => {
         if (timeLeft === null) return;

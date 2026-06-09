@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "classrooms")
@@ -27,6 +28,7 @@ public class Classroom {
             joinColumns = @JoinColumn(name = "classroom_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
+    @JsonIgnore
     private Set<User> students = new HashSet<>();
 
     @ManyToMany
@@ -35,6 +37,7 @@ public class Classroom {
             joinColumns = @JoinColumn(name = "classroom_id"),
             inverseJoinColumns = @JoinColumn(name = "exam_id")
     )
+    @JsonIgnore
     private Set<Exam> exams = new HashSet<>();
 
 
