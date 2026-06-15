@@ -1,7 +1,6 @@
 @echo off
 
 echo Uruchamianie backendu...
-start cmd /k "cd backend && mvn spring-boot:run"
-
+start cmd /k "cd backend && mvnw.cmd spring-boot:run"
 echo Uruchamianie frontendu...
-start cmd /k "cd frontend && npm install && npm start"
+start cmd /k "cd frontend && npm install && npm run dev"
