@@ -20,7 +20,17 @@ Platforma do rozwiązywania testów online z podziałem na role użytkowników.
 - Java, Spring Boot
 - PostgreSQL
 - React
+## Konfiguracja
 
+1. **Skopiuj plik konfiguracyjny:**
+   
+`cp backend/src/main/resources/application.properties.example backend/src/main/resources/application.properties
+
+2. **Uruchom bazę danych:**
+
+docker-compose up -d
+
+3. Uruchom
 ## Uruchomienie
 
 ### Backend
